@@ -16,12 +16,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.proyecto_movil.data.CreateClientRequest
+import com.example.proyecto_movil.data.CreateClienteConMembresiaRequest
 import com.example.proyecto_movil.data.RetrofitClient
 import com.example.proyecto_movil.data.Session
+import com.example.proyecto_movil.data.esEmailValido
+import com.example.proyecto_movil.data.esFechaValida
+import com.example.proyecto_movil.data.esTelefonoValido
+import com.example.proyecto_movil.data.manejarError
 import com.example.proyecto_movil.ui.theme.ZonaFitDark
 import com.example.proyecto_movil.ui.theme.ZonaFitYellow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private fun hoyComoTexto(): String =
+    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+val METODOS_PAGO = listOf("Efectivo", "Transferencia", "Tarjeta")
+
+// Precios sugeridos solo para precargar el campo "Monto" — el empleado puede
+// editarlo (descuentos, promociones, etc.). El backend no depende de estos valores.
+val PRECIOS_SUGERIDOS = mapOf(
+    "Mensual" to 50000.0,
+    "Trimestral" to 135000.0,
+    "Anual" to 480000.0
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +52,14 @@ fun AddClientScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var fechaNac by remember { mutableStateOf("1990-01-01") } // Formato YYYY-MM-DD
+
+    // Membresía que se registra en el mismo momento que el cliente
+    var tipoPlan by remember { mutableStateOf(TIPOS_MEMBRESIA.first()) }
+    var fechaInicioPlan by remember { mutableStateOf(hoyComoTexto()) }
+
+    // Pago: obligatorio, se registra en el mismo paso
+    var metodoPago by remember { mutableStateOf(METODOS_PAGO.first()) }
+    var monto by remember { mutableStateOf(PRECIOS_SUGERIDOS.getValue(TIPOS_MEMBRESIA.first()).toInt().toString()) }
 
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
@@ -92,35 +120,109 @@ fun AddClientScreen(navController: NavController) {
             // Campo Fecha (Simplificado)
             CustomOutlinedTextField(value = fechaNac, onValueChange = { fechaNac = it }, label = "Fecha Nac. (YYYY-MM-DD)")
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Membresía inicial",
+                color = ZonaFitYellow,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Plan que se le asigna al cliente desde ya (el vencimiento lo calcula el backend)
+            TipoDropdown(
+                tipo = tipoPlan,
+                onTipoChange = {
+                    tipoPlan = it
+                    monto = PRECIOS_SUGERIDOS.getValue(it).toInt().toString()
+                }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CustomOutlinedTextField(
+                value = fechaInicioPlan,
+                onValueChange = { fechaInicioPlan = it },
+                label = "Fecha inicio del plan (YYYY-MM-DD)"
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Pago (obligatorio)",
+                color = ZonaFitYellow,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            MetodoPagoDropdown(metodo = metodoPago, onMetodoChange = { metodoPago = it })
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CustomOutlinedTextField(
+                value = monto,
+                onValueChange = { monto = it },
+                label = "Monto pagado"
+            )
+
             Spacer(modifier = Modifier.height(32.dp))
 
             if (message.isNotEmpty()) {
-                Text(text = message, color = if (message.contains("éxito")) Color.Green else Color.Red, textAlign = TextAlign.Center)
+                Text(text = message, color = if (message.startsWith("✅")) Color.Green else Color.Red, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
             Button(
                 onClick = {
-                    if (nombre.isBlank() || apellido.isBlank() || documento.isBlank()) {
-                        message = "⚠️ Nombre, Apellido y Cédula son obligatorios"
-                        return@Button
+                    when {
+                        nombre.isBlank() || apellido.isBlank() || documento.isBlank() -> {
+                            message = "⚠️ Nombre, Apellido y Cédula son obligatorios"; return@Button
+                        }
+                        email.isNotBlank() && !esEmailValido(email) -> {
+                            message = "⚠️ El correo no tiene un formato válido"; return@Button
+                        }
+                        !esTelefonoValido(telefono) -> {
+                            message = "⚠️ El teléfono solo debe contener números"; return@Button
+                        }
+                        !esFechaValida(fechaNac) -> {
+                            message = "⚠️ La fecha debe tener formato YYYY-MM-DD"; return@Button
+                        }
+                        !esFechaValida(fechaInicioPlan) -> {
+                            message = "⚠️ La fecha de inicio del plan debe tener formato YYYY-MM-DD"; return@Button
+                        }
+                        monto.toDoubleOrNull() == null || monto.toDouble() <= 0.0 -> {
+                            message = "⚠️ El monto pagado es obligatorio y debe ser mayor a 0"; return@Button
+                        }
                     }
-                    
+
                     isLoading = true
                     message = ""
-                    
+
                     scope.launch {
                         try {
-                            val request = CreateClientRequest(nombre, apellido, documento, email, telefono, fechaNac)
-                            val response = RetrofitClient.api.createCliente(Session.bearer(), request)
-                            
+                            val request = CreateClienteConMembresiaRequest(
+                                nombre = nombre,
+                                apellido = apellido,
+                                documento = documento,
+                                email = email,
+                                telefono = telefono,
+                                fecha_nacimiento = fechaNac,
+                                tipo = tipoPlan,
+                                fecha_inicio = fechaInicioPlan,
+                                metodo_pago = metodoPago,
+                                monto = monto.toDouble()
+                            )
+                            val response = RetrofitClient.api.createClienteConMembresia(Session.bearer(), request)
+
                             if (response.isSuccessful) {
-                                message = "✅ Socio registrado con éxito"
-                                // Volvemos después de un segundo para que vea el mensaje
-                                kotlinx.coroutines.delay(1000)
+                                val vencimiento = response.body()?.membresia?.fecha_vencimiento
+                                val pagado = response.body()?.pago?.monto
+                                message = "✅ Socio registrado — plan $tipoPlan vence el $vencimiento — pago de $$pagado ($metodoPago) registrado"
+                                // Volvemos después de un momento para que vea el mensaje
+                                kotlinx.coroutines.delay(1500)
                                 navController.popBackStack()
                             } else {
-                                message = "❌ Error: ${response.code()}"
+                                message = manejarError(response.code(), navController)
                             }
                         } catch (e: Exception) {
                             message = "⚠️ Error de red: ${e.message}"
@@ -139,6 +241,43 @@ fun AddClientScreen(navController: NavController) {
                 } else {
                     Text("GUARDAR SOCIO", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MetodoPagoDropdown(metodo: String, onMetodoChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = metodo,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Método de pago") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ZonaFitYellow,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = ZonaFitYellow,
+                unfocusedLabelColor = Color.Gray,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            ),
+            shape = RoundedCornerShape(8.dp)
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            METODOS_PAGO.forEach { opcion ->
+                DropdownMenuItem(
+                    text = { Text(opcion) },
+                    onClick = {
+                        onMetodoChange(opcion)
+                        expanded = false
+                    }
+                )
             }
         }
     }

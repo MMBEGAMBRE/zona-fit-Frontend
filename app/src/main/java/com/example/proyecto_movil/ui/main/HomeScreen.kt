@@ -9,6 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +29,31 @@ import com.example.proyecto_movil.ui.theme.ZonaFitYellow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    // Reto GA2-AA4-EV04 #1: confirmar antes de cerrar sesión (AlertDialog)
+    var mostrarConfirmacionSalida by remember { mutableStateOf(false) }
+
+    if (mostrarConfirmacionSalida) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfirmacionSalida = false },
+            title = { Text("Cerrar sesión") },
+            text = { Text("¿Seguro que deseas salir?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarConfirmacionSalida = false
+                    Session.clear()
+                    navController.navigate("login") { popUpTo(0) }
+                }) {
+                    Text("Salir", color = ZonaFitYellow, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarConfirmacionSalida = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -93,20 +122,13 @@ fun HomeScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    PremiumMenuCard(
-                        title = "Gestión de Clientes",
-                        description = "Registra y administra la información de tus socios.",
-                        icon = Icons.Default.Group,
-                        onClick = { navController.navigate("clientes") }
-                    )
-                }
+                // Membresías y Pagos: visibles para TODOS los roles (empleado y admin)
                 item {
                     PremiumMenuCard(
                         title = "Membresías",
                         description = "Controla planes, pagos y fechas de vencimiento.",
                         icon = Icons.Default.Badge,
-                        onClick = { /* Navigate to Membresias */ }
+                        onClick = { navController.navigate("membresias") }
                     )
                 }
                 item {
@@ -114,12 +136,39 @@ fun HomeScreen(navController: NavController) {
                         title = "Pagos",
                         description = "Registro de ingresos y consulta de historial.",
                         icon = Icons.Default.AttachMoney,
-                        onClick = { /* Navigate to Pagos */ }
+                        onClick = { navController.navigate("pagos") }
                     )
                 }
-                
+
+                // Editar mis datos y Cambiar contraseña: cualquier usuario autenticado
+                // (Administrador o Empleado) puede gestionar su propia cuenta.
+                item {
+                    PremiumMenuCard(
+                        title = "Editar mis datos",
+                        description = "Actualiza tu nombre y correo.",
+                        icon = Icons.Default.Person,
+                        onClick = { navController.navigate("editProfile") }
+                    )
+                }
+                item {
+                    PremiumMenuCard(
+                        title = "Cambiar contraseña",
+                        description = "Actualiza tu contraseña de acceso.",
+                        icon = Icons.Default.Lock,
+                        onClick = { navController.navigate("changePassword") }
+                    )
+                }
+
                 // OPCIONES EXCLUSIVAS PARA ADMINISTRADOR (Dueño)
                 if (Session.isAdmin) {
+                    item {
+                        PremiumMenuCard(
+                            title = "Gestión de Clientes",
+                            description = "Registra y administra la información de tus socios.",
+                            icon = Icons.Default.Group,
+                            onClick = { navController.navigate("clientes") }
+                        )
+                    }
                     item {
                         PremiumMenuCard(
                             title = "Gestión Empleados",
@@ -142,12 +191,7 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = {
-                    Session.clear()
-                    navController.navigate("login") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                },
+                onClick = { mostrarConfirmacionSalida = true },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 border = androidx.compose.foundation.BorderStroke(1.dp, ZonaFitYellow),

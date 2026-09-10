@@ -31,8 +31,8 @@ import kotlinx.coroutines.launch
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     
     // --- ESTADO de la pantalla ---
-    var email by remember { mutableStateOf("admin@zonafit.com") }
-    var password by remember { mutableStateOf("admin123") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var result by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }

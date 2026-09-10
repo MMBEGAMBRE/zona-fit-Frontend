@@ -1,6 +1,7 @@
 package com.example.proyecto_movil.ui.main
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,7 @@ import androidx.navigation.NavController
 import com.example.proyecto_movil.data.ClienteResponse
 import com.example.proyecto_movil.data.RetrofitClient
 import com.example.proyecto_movil.data.Session
+import com.example.proyecto_movil.data.manejarError
 import com.example.proyecto_movil.ui.theme.ZonaFitDark
 import com.example.proyecto_movil.ui.theme.ZonaFitYellow
 import kotlinx.coroutines.launch
@@ -41,10 +43,10 @@ fun ClientsScreen(navController: NavController) {
                 if (response.isSuccessful) {
                     clients = response.body() ?: emptyList()
                 } else {
-                    errorMessage = "Error al obtener clientes (Código ${response.code()})"
+                    errorMessage = manejarError(response.code(), navController)
                 }
             } catch (e: Exception) {
-                errorMessage = "⚠️ Error de conexión: ${e.message}"
+                errorMessage = "📡 Sin conexión al servidor"
             } finally {
                 isLoading = false
             }
@@ -87,7 +89,7 @@ fun ClientsScreen(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(clients) { cliente ->
-                        ClientItem(cliente)
+                        ClientItem(cliente) { id -> navController.navigate("edit_cliente/$id") }
                     }
                 }
             }
@@ -96,9 +98,9 @@ fun ClientsScreen(navController: NavController) {
 }
 
 @Composable
-fun ClientItem(cliente: ClienteResponse) {
+fun ClientItem(cliente: ClienteResponse, onEditClick: (Int) -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onEditClick(cliente.id) },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

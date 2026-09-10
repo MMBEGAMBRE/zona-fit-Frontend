@@ -1,0 +1,14 @@
+- [ ] Actualizar `Models.kt` con los nuevos modelos (Membresías, Pagos, Edición)
+- [ ] Actualizar `ApiService.kt` con los nuevos endpoints y parámetros `@Path`
+- [ ] Crear `data/ErrorHandler.kt` para manejo centralizado de errores
+- [ ] Crear `data/Validaciones.kt` para validación de formularios
+- [ ] Actualizar `RetrofitClient.kt` y `LoginScreen.kt` (quitar precarga)
+- [ ] Actualizar `MainActivity.kt` con las nuevas rutas del NavHost
+- [ ] Actualizar `HomeScreen.kt` con las nuevas tarjetas y navegación
+- [ ] Actualizar `ClientsScreen.kt` y `AddClientScreen.kt` (navegación a edición y validaciones)
+- [ ] Crear `ui/main/EditProfileScreen.kt`
+- [ ] Crear `ui/main/ChangePasswordScreen.kt`
+- [ ] Crear `ui/main/MembresiasScreen.kt`
+- [ ] Crear `ui/main/PagosScreen.kt`
+- [ ] Crear `ui/main/EditClientScreen.kt`
+- [ ] Verificar compilación y sincronización

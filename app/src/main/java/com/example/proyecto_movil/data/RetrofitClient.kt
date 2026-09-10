@@ -6,8 +6,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // Usamos la IP de tu PC para que el celular físico pueda conectar
-    private const val BASE_URL = "http://192.168.0.102:5050/"
+    // Opción A: para emulador de Android Studio (IP especial que apunta a tu PC)
+    // private const val BASE_URL = "http://10.0.2.2:5050/"
+
+    // Opción B: para celular físico en la misma red Wi-Fi que tu PC
+    private const val BASE_URL = "http://192.168.1.65:5050/"
+
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
