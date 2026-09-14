@@ -11,9 +11,9 @@ fun manejarError(code: Int, navController: NavController? = null): String {
             navController?.navigate("login") { popUpTo(0) }
             "⚠️ Tu sesión expiró, vuelve a iniciar sesión"
         }
-        403 -> "🚫 No tienes permisos para esta acción"
-        404 -> "❌ No se encontró el recurso solicitado"
-        409 -> "❌ El dato ya existe (conflicto)"
-        else -> "❌ Error inesperado (código $code)"
+        403 -> " No tienes permisos para esta acción"
+        404 -> " No se encontró el recurso solicitado"
+        409 -> " El dato ya existe (conflicto)"
+        else -> " Error inesperado (código $code)"
     }
 }

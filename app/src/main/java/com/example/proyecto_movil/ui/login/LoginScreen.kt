@@ -172,22 +172,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 24.dp)) {
-                Text(
-                    text = "GESTIÓN DE GIMNASIO",
-                    color = ZonaFitYellow,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    text = "SIMPLIFICADA",
-                    color = ZonaFitYellow,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-            }
+            Spacer(modifier = Modifier.height(64.dp))
         }
     }
 }

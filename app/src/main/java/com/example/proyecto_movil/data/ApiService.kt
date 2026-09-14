@@ -2,6 +2,7 @@ package com.example.proyecto_movil.data
 
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -78,10 +79,28 @@ interface ApiService {
     @GET("api/clientes/{id}")
     suspend fun getCliente(@Header("Authorization") auth: String, @Path("id") id: Int): Response<ClienteResponse>
 
+    @GET("api/clientes/buscar/{documento}")
+    suspend fun buscarCliente(@Header("Authorization") auth: String, @Path("documento") documento: String): Response<ClienteResponse>
+
     @PUT("api/clientes/{id}")
     suspend fun updateCliente(
         @Header("Authorization") auth: String,
         @Path("id") id: Int,
         @Body request: UpdateClientRequest
     ): Response<SimpleMessageResponse>
+
+    @DELETE("api/clientes/{id}")
+    suspend fun deleteCliente(@Header("Authorization") auth: String, @Path("id") id: Int): Response<SimpleMessageResponse>
+
+    @GET("api/auth/users")
+    suspend fun getUsers(@Header("Authorization") auth: String): Response<List<User>>
+
+    @DELETE("api/auth/users/{id}")
+    suspend fun deleteUser(@Header("Authorization") auth: String, @Path("id") id: Int): Response<SimpleMessageResponse>
+
+    @POST("api/membresias/renovar")
+    suspend fun renovarMembresia(@Header("Authorization") auth: String, @Body request: RenovacionRequest): Response<SimpleMessageResponse>
+
+    @POST("api/membresias/con-pago")
+    suspend fun createMembresiaConPago(@Header("Authorization") auth: String, @Body request: CreateMembresiaConPagoRequest): Response<SimpleMessageResponse>
 }

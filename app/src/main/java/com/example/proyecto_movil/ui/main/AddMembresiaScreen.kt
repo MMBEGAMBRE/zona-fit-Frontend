@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.proyecto_movil.data.ClienteResponse
-import com.example.proyecto_movil.data.CreateMembresiaRequest
+import com.example.proyecto_movil.data.CreateMembresiaConPagoRequest
 import com.example.proyecto_movil.data.RetrofitClient
 import com.example.proyecto_movil.data.Session
 import com.example.proyecto_movil.data.esFechaValida
@@ -25,6 +25,10 @@ import com.example.proyecto_movil.data.manejarError
 import com.example.proyecto_movil.ui.theme.ZonaFitDark
 import com.example.proyecto_movil.ui.theme.ZonaFitYellow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 val TIPOS_MEMBRESIA = listOf("Mensual", "Trimestral", "Anual")
 
@@ -34,14 +38,43 @@ fun AddMembresiaScreen(navController: NavController) {
     var clientes by remember { mutableStateOf<List<ClienteResponse>>(emptyList()) }
     var clienteSeleccionado by remember { mutableStateOf<ClienteResponse?>(null) }
     var tipo by remember { mutableStateOf(TIPOS_MEMBRESIA.first()) }
-    var fechaInicio by remember { mutableStateOf("") }
+    var fechaInicio by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
     var fechaVencimiento by remember { mutableStateOf("") }
+
+    // Campos de Pago Integrado
+    var monto by remember { mutableStateOf(PRECIOS_SUGERIDOS[TIPOS_MEMBRESIA.first()]?.toInt()?.toString() ?: "") }
+    var metodoPago by remember { mutableStateOf(METODOS_PAGO.first()) }
 
     var cargandoClientes by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
+
+    // Función para calcular fecha fin automáticamente
+    fun calcularFechaVencimiento(inicio: String, plan: String): String {
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = sdf.parse(inicio) ?: return ""
+            val cal = Calendar.getInstance()
+            cal.time = date
+
+            val meses = when(plan) {
+                "Mensual" -> 1
+                "Trimestral" -> 3
+                "Anual" -> 12
+                else -> 1
+            }
+            cal.add(Calendar.MONTH, meses)
+            sdf.format(cal.time)
+        } catch (e: Exception) { "" }
+    }
+
+    // Recalcular cuando cambie el tipo o la fecha de inicio
+    LaunchedEffect(tipo, fechaInicio) {
+        fechaVencimiento = calcularFechaVencimiento(fechaInicio, tipo)
+        monto = PRECIOS_SUGERIDOS[tipo]?.toInt()?.toString() ?: ""
+    }
 
     // Carga la lista de clientes para poder elegir a quién se le asigna la membresía
     LaunchedEffect(Unit) {
@@ -123,7 +156,26 @@ fun AddMembresiaScreen(navController: NavController) {
                 CustomOutlinedTextField(
                     value = fechaVencimiento,
                     onValueChange = { fechaVencimiento = it },
-                    label = "Fecha vencimiento (YYYY-MM-DD)"
+                    label = "Fecha vencimiento (Calculada)"
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Información del Pago",
+                    color = ZonaFitYellow,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                MetodoPagoDropdown(metodo = metodoPago, onMetodoChange = { metodoPago = it })
+                Spacer(modifier = Modifier.height(12.dp))
+
+                CustomOutlinedTextField(
+                    value = monto,
+                    onValueChange = { monto = it },
+                    label = "Monto pagado"
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -147,11 +199,8 @@ fun AddMembresiaScreen(navController: NavController) {
                             !esFechaValida(fechaInicio) -> {
                                 message = "⚠️ La fecha de inicio debe tener formato YYYY-MM-DD"; return@Button
                             }
-                            !esFechaValida(fechaVencimiento) -> {
-                                message = "⚠️ La fecha de vencimiento debe tener formato YYYY-MM-DD"; return@Button
-                            }
-                            fechaVencimiento <= fechaInicio -> {
-                                message = "⚠️ La fecha de vencimiento debe ser posterior a la de inicio"; return@Button
+                            monto.toDoubleOrNull() == null || monto.toDouble() <= 0.0 -> {
+                                message = "⚠️ El monto es obligatorio"; return@Button
                             }
                         }
 
@@ -160,16 +209,18 @@ fun AddMembresiaScreen(navController: NavController) {
 
                         scope.launch {
                             try {
-                                val request = CreateMembresiaRequest(
+                                val request = CreateMembresiaConPagoRequest(
                                     cliente_id = cliente!!.id,
                                     tipo = tipo,
                                     fecha_inicio = fechaInicio,
-                                    fecha_vencimiento = fechaVencimiento
+                                    fecha_vencimiento = fechaVencimiento,
+                                    monto = monto.toDouble(),
+                                    metodo_pago = metodoPago
                                 )
-                                val response = RetrofitClient.api.createMembresia(Session.bearer(), request)
+                                val response = RetrofitClient.api.createMembresiaConPago(Session.bearer(), request)
 
                                 if (response.isSuccessful) {
-                                    message = "✅ Membresía creada con éxito"
+                                    message = "✅ Membresía y pago registrados"
                                     kotlinx.coroutines.delay(1000)
                                     navController.popBackStack()
                                 } else {
@@ -190,7 +241,7 @@ fun AddMembresiaScreen(navController: NavController) {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
                     } else {
-                        Text("GUARDAR MEMBRESÍA", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text("GUARDAR Y ACTIVAR", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
             }

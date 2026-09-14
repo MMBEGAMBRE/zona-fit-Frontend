@@ -32,7 +32,9 @@ data class ClienteResponse(
     val email: String?,
     val telefono: String?,
     val fecha_nacimiento: String?,
-    val estado: String?
+    val estado: String?,
+    val membresia_estado: String? = null,
+    val fecha_vencimiento: String? = null
 )
 
 // -------- Datos de Registros/Auditoría (Solo Admin) --------
@@ -111,7 +113,8 @@ data class MembresiaResponse(
     val fecha_vencimiento: String,
     val estado: String,
     val cliente_nombre: String?,
-    val cliente_apellido: String?
+    val cliente_apellido: String?,
+    val cliente_documento: String? = null
 )
 
 data class PagoResponse(
@@ -143,3 +146,18 @@ data class ProfileResponse(val message: String?, val user: ProfileUser?)
 data class UpdateProfileRequest(val nombre: String, val email: String)
 data class ChangePasswordRequest(val current_password: String, val new_password: String)
 data class SimpleMessageResponse(val message: String?)
+
+data class RenovacionRequest(
+    val membresia_id: Int,
+    val monto: Double,
+    val metodo_pago: String
+)
+
+data class CreateMembresiaConPagoRequest(
+    val cliente_id: Int,
+    val tipo: String,
+    val fecha_inicio: String,
+    val fecha_vencimiento: String,
+    val monto: Double,
+    val metodo_pago: String
+)

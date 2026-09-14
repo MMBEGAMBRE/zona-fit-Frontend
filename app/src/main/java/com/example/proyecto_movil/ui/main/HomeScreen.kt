@@ -1,11 +1,13 @@
 package com.example.proyecto_movil.ui.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import com.example.proyecto_movil.ui.theme.ZonaFitYellow
 fun HomeScreen(navController: NavController) {
     // Reto GA2-AA4-EV04 #1: confirmar antes de cerrar sesión (AlertDialog)
     var mostrarConfirmacionSalida by remember { mutableStateOf(false) }
+    var menuPerfilAbierto by remember { mutableStateOf(false) }
 
     if (mostrarConfirmacionSalida) {
         AlertDialog(
@@ -65,14 +68,42 @@ fun HomeScreen(navController: NavController) {
                         color = Color.Black
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = { /* Menu */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = null, tint = Color.Black)
-                    }
-                },
                 actions = {
-                    IconButton(onClick = { /* Notifications */ }) {
-                        Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.Black)
+                    Box {
+                        IconButton(onClick = { menuPerfilAbierto = true }) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = "Perfil", tint = Color.Black)
+                        }
+                        DropdownMenu(
+                            expanded = menuPerfilAbierto,
+                            onDismissRequest = { menuPerfilAbierto = false },
+                            modifier = Modifier.background(ZonaFitDark)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Mis Datos", color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = ZonaFitYellow) },
+                                onClick = {
+                                    menuPerfilAbierto = false
+                                    navController.navigate("editProfile")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Seguridad", color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = ZonaFitYellow) },
+                                onClick = {
+                                    menuPerfilAbierto = false
+                                    navController.navigate("changePassword")
+                                }
+                            )
+                            HorizontalDivider(color = Color.Gray)
+                            DropdownMenuItem(
+                                text = { Text("Cerrar Sesión", color = Color.Red) },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = Color.Red) },
+                                onClick = {
+                                    menuPerfilAbierto = false
+                                    mostrarConfirmacionSalida = true
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -91,9 +122,9 @@ fun HomeScreen(navController: NavController) {
         ) {
             // BANNER SUPERIOR
             Text(
-                text = "TODO LO QUE NECESITAS PARA ADMINISTRAR TU GIMNASIO",
+                text = "ADMINISTRACIÓN DEL GIMNASIO",
                 color = ZonaFitYellow,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(vertical = 16.dp)
@@ -107,7 +138,7 @@ fun HomeScreen(navController: NavController) {
             )
             // INDICADOR DE ROL
             Text(
-                text = "Rol: ${if (Session.isAdmin) "ADMINISTRADOR" else "EMPLEADO"}",
+                text = "Acceso: ${if (Session.isAdmin) "ADMINISTRADOR" else "OPERATIVO"}",
                 fontSize = 12.sp,
                 color = ZonaFitYellow,
                 fontWeight = FontWeight.Medium
@@ -122,82 +153,45 @@ fun HomeScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Membresías y Pagos: visibles para TODOS los roles (empleado y admin)
+                // OPCIÓN PARA TODOS: Clientes (Socio)
+                item {
+                    PremiumMenuCard(
+                        title = "Socios",
+                        description = "Registro y listado de clientes del gimnasio.",
+                        icon = Icons.Default.Group,
+                        onClick = { navController.navigate("clientes") }
+                    )
+                }
+
+                // OPCIÓN PARA TODOS: Membresías
                 item {
                     PremiumMenuCard(
                         title = "Membresías",
-                        description = "Controla planes, pagos y fechas de vencimiento.",
+                        description = "Asignar planes y verificar vencimientos.",
                         icon = Icons.Default.Badge,
                         onClick = { navController.navigate("membresias") }
                     )
                 }
-                item {
-                    PremiumMenuCard(
-                        title = "Pagos",
-                        description = "Registro de ingresos y consulta de historial.",
-                        icon = Icons.Default.AttachMoney,
-                        onClick = { navController.navigate("pagos") }
-                    )
-                }
 
-                // Editar mis datos y Cambiar contraseña: cualquier usuario autenticado
-                // (Administrador o Empleado) puede gestionar su propia cuenta.
-                item {
-                    PremiumMenuCard(
-                        title = "Editar mis datos",
-                        description = "Actualiza tu nombre y correo.",
-                        icon = Icons.Default.Person,
-                        onClick = { navController.navigate("editProfile") }
-                    )
-                }
-                item {
-                    PremiumMenuCard(
-                        title = "Cambiar contraseña",
-                        description = "Actualiza tu contraseña de acceso.",
-                        icon = Icons.Default.Lock,
-                        onClick = { navController.navigate("changePassword") }
-                    )
-                }
-
-                // OPCIONES EXCLUSIVAS PARA ADMINISTRADOR (Dueño)
+                // --- OPCIONES EXCLUSIVAS PARA ADMINISTRADOR ---
                 if (Session.isAdmin) {
                     item {
                         PremiumMenuCard(
-                            title = "Gestión de Clientes",
-                            description = "Registra y administra la información de tus socios.",
-                            icon = Icons.Default.Group,
-                            onClick = { navController.navigate("clientes") }
-                        )
-                    }
-                    item {
-                        PremiumMenuCard(
-                            title = "Gestión Empleados",
-                            description = "Administra el personal y asigna permisos.",
+                            title = "Personal",
+                            description = "Gestión de empleados y permisos.",
                             icon = Icons.Default.Engineering,
-                            onClick = { navController.navigate("add_empleado") }
+                            onClick = { navController.navigate("empleados") }
                         )
                     }
                     item {
                         PremiumMenuCard(
-                            title = "Control Accesos",
-                            description = "Historial de actividad y registros del sistema.",
+                            title = "Auditoría",
+                            description = "Historial técnico del sistema.",
                             icon = Icons.Default.DoorSliding,
                             onClick = { navController.navigate("registros") }
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { mostrarConfirmacionSalida = true },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                border = androidx.compose.foundation.BorderStroke(1.dp, ZonaFitYellow),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("CERRAR SESIÓN", color = ZonaFitYellow, fontWeight = FontWeight.Bold)
             }
         }
     }

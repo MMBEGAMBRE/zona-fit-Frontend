@@ -17,14 +17,14 @@ import com.example.proyecto_movil.ui.login.LoginScreen
 import com.example.proyecto_movil.ui.main.AddClientScreen
 import com.example.proyecto_movil.ui.main.AddEmployeeScreen
 import com.example.proyecto_movil.ui.main.AddMembresiaScreen
-import com.example.proyecto_movil.ui.main.AddPagoScreen
 import com.example.proyecto_movil.ui.main.ChangePasswordScreen
+import com.example.proyecto_movil.ui.main.ClientDetailScreen
 import com.example.proyecto_movil.ui.main.ClientsScreen
 import com.example.proyecto_movil.ui.main.EditClientScreen
 import com.example.proyecto_movil.ui.main.EditProfileScreen
+import com.example.proyecto_movil.ui.main.EmployeesScreen
 import com.example.proyecto_movil.ui.main.HomeScreen
 import com.example.proyecto_movil.ui.main.MembresiasScreen
-import com.example.proyecto_movil.ui.main.PagosScreen
 import com.example.proyecto_movil.ui.main.RegistrosScreen
 import com.example.proyecto_movil.ui.theme.ProyectomovilTheme
 
@@ -62,6 +62,9 @@ class MainActivity : ComponentActivity() {
                         composable("registros") {
                             RegistrosScreen(navController = navController)
                         }
+                        composable("empleados") {
+                            EmployeesScreen(navController = navController)
+                        }
                         composable("add_empleado") {
                             AddEmployeeScreen(navController = navController)
                         }
@@ -70,12 +73,6 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("add_membresia") {
                             AddMembresiaScreen(navController = navController)
-                        }
-                        composable("pagos") {
-                            PagosScreen(navController = navController)
-                        }
-                        composable("add_pago") {
-                            AddPagoScreen(navController = navController)
                         }
                         composable("editProfile") {
                             EditProfileScreen(navController = navController)
@@ -89,6 +86,13 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val clienteId = backStackEntry.arguments?.getInt("id") ?: 0
                             EditClientScreen(navController = navController, clienteId = clienteId)
+                        }
+                        composable(
+                            "client_detail/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val id = backStackEntry.arguments?.getInt("id") ?: 0
+                            ClientDetailScreen(navController = navController, clienteId = id)
                         }
                     }
                 }
