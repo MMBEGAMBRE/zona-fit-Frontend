@@ -23,12 +23,7 @@ interface ApiService {
         @Body request: CreateClientRequest
     ): Response<LoginResponse>
 
-    // Registrar cliente + membresía en un solo paso (el backend calcula el vencimiento)
-    @POST("api/clientes/con-membresia")
-    suspend fun createClienteConMembresia(
-        @Header("Authorization") auth: String,
-        @Body request: CreateClienteConMembresiaRequest
-    ): Response<ClienteConMembresiaResponse>
+
 
     // Obtener Registros de Auditoría (Solo para el Dueño/Admin)
     @GET("api/registros/")
@@ -66,6 +61,12 @@ interface ApiService {
         @Body request: CreateMembresiaRequest
     ): Response<SimpleMessageResponse>
 
+    @POST("api/membresias/")
+    suspend fun createMembresiaConPago(
+        @Header("Authorization") auth: String,
+        @Body request: CreateMembresiaConPagoRequest
+    ): Response<SimpleMessageResponse>
+
     @GET("api/pagos/")
     suspend fun getPagos(@Header("Authorization") auth: String): Response<List<PagoResponse>>
 
@@ -100,7 +101,4 @@ interface ApiService {
 
     @POST("api/membresias/renovar")
     suspend fun renovarMembresia(@Header("Authorization") auth: String, @Body request: RenovacionRequest): Response<SimpleMessageResponse>
-
-    @POST("api/membresias/con-pago")
-    suspend fun createMembresiaConPago(@Header("Authorization") auth: String, @Body request: CreateMembresiaConPagoRequest): Response<SimpleMessageResponse>
 }

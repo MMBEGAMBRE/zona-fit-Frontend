@@ -31,9 +31,9 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MembresiasScreen(navController: NavController) {
-    var membresias by remember { mutableStateOf<List<MembresiaResponse>>(emptyList()) }
+    var membresias by remember { mutableStateOf<List<MembresiaResponse>>(Session.cacheMembresias ?: emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(Session.cacheMembresias == null) }
     var errorMessage by remember { mutableStateOf("") }
 
     // Estado para el diálogo de renovación
@@ -46,14 +46,17 @@ fun MembresiasScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
 
     fun cargarMembresias() {
-        isLoading = true
+        if (membresias.isEmpty()) isLoading = true
         scope.launch {
             try {
                 val resp = RetrofitClient.api.getMembresias(Session.bearer())
-                if (resp.isSuccessful) membresias = resp.body() ?: emptyList()
-                else errorMessage = "Error al obtener membresías"
+                if (resp.isSuccessful) {
+                    val data = resp.body() ?: emptyList()
+                    membresias = data
+                    Session.cacheMembresias = data // Actualizar caché
+                } else errorMessage = "Error al obtener membresías"
             } catch (e: Exception) {
-                errorMessage = "⚠️ Error de conexión"
+                if (membresias.isEmpty()) errorMessage = "⚠️ Error de conexión"
             } finally { isLoading = false }
         }
     }
@@ -62,11 +65,14 @@ fun MembresiasScreen(navController: NavController) {
         cargarMembresias()
     }
 
-    val membresiasFiltradas = if (searchQuery.isEmpty()) membresias
-    else membresias.filter { m ->
-        m.cliente_nombre?.contains(searchQuery, ignoreCase = true) == true ||
-        m.cliente_apellido?.contains(searchQuery, ignoreCase = true) == true ||
-        m.cliente_documento?.contains(searchQuery) == true
+    // Optimización: Filtrado eficiente usando remember
+    val membresiasFiltradas = remember(searchQuery, membresias) {
+        if (searchQuery.isEmpty()) membresias
+        else membresias.filter { m ->
+            m.cliente_nombre?.contains(searchQuery, ignoreCase = true) == true ||
+            m.cliente_apellido?.contains(searchQuery, ignoreCase = true) == true ||
+            m.cliente_documento?.contains(searchQuery) == true
+        }
     }
 
     if (mostrarDialogoRenovacion && membresiaARenovar != null) {

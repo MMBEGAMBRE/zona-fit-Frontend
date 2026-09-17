@@ -26,7 +26,6 @@ import com.example.proyecto_movil.data.Session
 import com.example.proyecto_movil.data.manejarError
 import com.example.proyecto_movil.ui.theme.ZonaFitDark
 import com.example.proyecto_movil.ui.theme.ZonaFitYellow
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,35 +33,36 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(navController: NavController) {
-    var clients by remember { mutableStateOf<List<ClienteResponse>>(emptyList()) }
+    var clients by remember { mutableStateOf<List<ClienteResponse>>(Session.cacheClientes ?: emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(Session.cacheClientes == null) }
     var errorMessage by remember { mutableStateOf("") }
     
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                val response = RetrofitClient.api.getClientes(Session.bearer())
-                if (response.isSuccessful) {
-                    clients = response.body() ?: emptyList()
-                } else {
-                    errorMessage = manejarError(response.code(), navController)
-                }
-            } catch (e: Exception) {
-                errorMessage = "📡 Sin conexión al servidor"
-            } finally {
-                isLoading = false
+        try {
+            val response = RetrofitClient.api.getClientes(Session.bearer())
+            if (response.isSuccessful) {
+                val data = response.body() ?: emptyList()
+                clients = data
+                Session.cacheClientes = data // Actualizar caché
+            } else {
+                errorMessage = manejarError(response.code(), navController)
             }
+        } catch (e: Exception) {
+            if (clients.isEmpty()) errorMessage = "📡 Sin conexión al servidor"
+        } finally {
+            isLoading = false
         }
     }
 
-    val filteredClients = if (searchQuery.isEmpty()) clients
-    else clients.filter { 
-        it.nombre.contains(searchQuery, ignoreCase = true) || 
-        it.apellido.contains(searchQuery, ignoreCase = true) ||
-        it.documento.contains(searchQuery)
+    // Optimización: Filtrado eficiente usando remember
+    val filteredClients = remember(searchQuery, clients) {
+        if (searchQuery.isEmpty()) clients
+        else clients.filter {
+            it.nombre.contains(searchQuery, ignoreCase = true) ||
+            it.apellido.contains(searchQuery, ignoreCase = true) ||
+            it.documento.contains(searchQuery)
+        }
     }
 
     Scaffold(

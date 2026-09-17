@@ -18,14 +18,14 @@ object RetrofitClient {
 
 
     private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.HEADERS
     }
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(logging)
-        .connectTimeout(60, TimeUnit.SECONDS) // Tiempo máximo para conectar
-        .readTimeout(60, TimeUnit.SECONDS)    // Tiempo máximo para recibir datos
-        .writeTimeout(60, TimeUnit.SECONDS)   // Tiempo máximo para enviar datos
+        .connectTimeout(30, TimeUnit.SECONDS) // Ajustado a 30s para evitar esperas eternas
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
     val api: ApiService = Retrofit.Builder()

@@ -74,21 +74,7 @@ data class CreateMembresiaRequest(
     val fecha_vencimiento: String
 )
 
-// -------- Registrar cliente + membresía + pago en un solo paso --------
-// fecha_vencimiento NO se envía: la calcula el backend según 'tipo' y 'fecha_inicio'.
-// El pago es obligatorio: metodo_pago y monto siempre deben ir informados.
-data class CreateClienteConMembresiaRequest(
-    val nombre: String,
-    val apellido: String,
-    val documento: String,
-    val email: String,
-    val telefono: String,
-    val fecha_nacimiento: String,
-    val tipo: String,
-    val fecha_inicio: String,
-    val metodo_pago: String,
-    val monto: Double
-)
+
 
 // -------- Registrar un pago para un cliente/membresía ya existentes --------
 data class CreatePagoRequest(
@@ -98,12 +84,7 @@ data class CreatePagoRequest(
     val metodo_pago: String
 )
 
-data class ClienteConMembresiaResponse(
-    val message: String?,
-    val cliente: ClienteResponse?,
-    val membresia: MembresiaResponse?,
-    val pago: PagoResponse?
-)
+
 
 data class MembresiaResponse(
     val id: Int,

@@ -21,7 +21,6 @@ import com.example.proyecto_movil.data.RetrofitClient
 import com.example.proyecto_movil.data.Session
 import com.example.proyecto_movil.ui.theme.ZonaFitDark
 import com.example.proyecto_movil.ui.theme.ZonaFitYellow
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,22 +29,18 @@ fun RegistrosScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
     
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                val response = RetrofitClient.api.getRegistros(Session.bearer())
-                if (response.isSuccessful) {
-                    registros = response.body() ?: emptyList()
-                } else {
-                    errorMessage = "No tienes permiso o el servidor falló"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexión"
-            } finally {
-                isLoading = false
+        try {
+            val response = RetrofitClient.api.getRegistros(Session.bearer())
+            if (response.isSuccessful) {
+                registros = response.body() ?: emptyList()
+            } else {
+                errorMessage = "No tienes permiso o el servidor falló"
             }
+        } catch (e: Exception) {
+            errorMessage = "Error de conexión"
+        } finally {
+            isLoading = false
         }
     }
 
